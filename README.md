@@ -12,6 +12,14 @@ $ cd UK_IHD2HA
 
 $ ./install.sh
 ```
+Then in home assistant, add this to your configuration.yaml:
+```
+# Example configuration.yaml entry
+sensor:
+  - platform: rest
+    resource: http://IP_ADDRESS/sensor
+    unit_of_measurement: watts
+```
 
 ## Usage
 How to start\stop server and check status once I get that bit coded...
