@@ -11,33 +11,30 @@ $ git clone https://github.com/ralphhughes/UK_IHD2HA.git
 $ cd UK_IHD2HA
 
 $ ./install.sh
+
+$ ./snapshot.sh
 ```
-Then in home assistant, add this to your configuration.yaml:
+The `snapshot.sh` file takes a pic with the webcam and saves it to `current.jpg` in the current folder. Open this image in your favourite image editor and draw a bounding box round the power digits on the IHD. Make a note of the top left coordinate and width and height of this box in pixels. 
+
+Next go to your home assistant instance, click your username bottom left, then scroll down to the bottom of your profile page. Clcik "Create Token" in the "long-lived access tokens" section. Make a note of it. 
+
+Next edit the config file and save the info you gathered in the last 2 steps into the config file
 ```
-# Example configuration.yaml entry
-sensor:
-  - platform: rest
-    name: IHD Power
-    resource: http://192.168.1.1:5000/sensor
-    method: GET
-    value_template: '{{ value_json.sensor_value }}'
-    unit_of_measurement: 'W'
-    device_class: power
-    scan_interval: 10
+$ nano UK_IHD2HA.config
+
+$ ./start.sh
+
+$ tail -f fswebcam.log
 ```
 
-## Usage
-How to start\stop server and check status once I get that bit coded...
 
-## Todo
+## Design decisions
+- easyOCR & pyTorch was way overkill and couldn't get it to compile on my Pi 1 architecture. Abandoned this approach.
+- tesseract installed OK but couldn't get it to recognise the font from the IHD even with "ssd.traineddata". Abandoned this approach.
+- fswebcam has a `--loop n` parameter which keeps the process running and takes a photo every n seconds. Also a "--exec" parameter which pretty much cemented my decision to do this as a shell script.
+- ssocr is fast enough it can be spawned as soon as a new image is available
+- Found an already existing seven segments ocr integration? Can't see anything about update rate or how it watches for a new image in the docs? Also I have no cameras set up in HA...
+- getting data into HA via cmd line sensor via SSH requires setting up SSH keys, also this would be a local poll. Abandoned this approach
+- restful sensor reading a python flask wrapper around ssocr. Showed promise, ultimately abandoned.
+- mqtt broker. Apparently there's one built into HA, but as I've never used MQTT the learning curve was steep. Abandoned for now.
 
-fswebcam has a `--loop n` parameter which keeps the process running and takes a photo every n seconds
-motion can continuosly watch a webcam feed and fire a process and save a snapshot when the image changes. This seems the most promising.
-
-ssocr is fast enough it can be spawned as soon as a new image is available
-
-Methods of getting values into HA:
-- cmd line sensor via SSH requires setting up SSH keys, also this would be a local poll
-- restful sensor reading the python flask wrapper
-- seven segments ocr integration? Can't see anything about update rate or how it watches for a new image in the docs?
-- mqtt broker?
