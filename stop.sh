@@ -9,5 +9,9 @@ while kill -0 `cat fswebcam.pid` 2>/dev/null; do
     echo -n "."
 done
 
+rm fswebcam.pid
+rm current.jpg
+rm lastread.txt
+
 # Print success
 echo "Stopped fswebcam"

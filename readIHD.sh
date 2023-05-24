@@ -9,13 +9,28 @@ mv currentread.txt lastread.txt
 # OCR the latest jpg to get the current reading
 ssocr -d -1 -b black crop $AREA_X $AREA_Y $AREA_WIDTH $AREA_HEIGHT closing current.jpg > currentread.txt
 
-echo "Last Reading: `cat lastread.txt`"
-echo "Current Reading: `cat currentread.txt`"
+# Get the OCR results into variables
+CURRENT_READING=`cat currentread.txt`
+LAST_READING=`cat lastread.txt`
 
-# Check if the new reading has changed
+# Debug
+echo "Last Reading: $LAST_READING"
+echo "Current Reading: $CURRENT_READING"
+
+# Check if the new reading has changed by checking OCR
 if cmp -s lastread.txt currentread.txt; then
   echo "No change"
 else
   echo "New reading"
-  # curl
+
+  # Post process the result to convert kw to watts if needed
+  if [[ $CURRENT_READING == *"."* ]]; then
+    # We need bc to do floating point multiply as shell scripts only support integers
+    CURRENT_READING=$(echo "scale=2; $CURRENT_READING * 1000" | bc)
+  fi
+
+  curl -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $HA_ACCESS_TOKEN" \
+  -d "{\"state\": \"$CURRENT_READING\", \"attributes\": {\"unit_of_measurement\": \"W\"}}" \
+  $HA_URL/api/states/$HA_ENTITY_ID
 fi
